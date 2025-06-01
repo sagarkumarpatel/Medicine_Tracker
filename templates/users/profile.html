@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}- Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Profile</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Account Information</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-user-circle fa-7x text-gray-300 mb-3"></i>
+                    <h5 class="mb-0">{{ user.username }}</h5>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <span class="badge {% if user.profile.role == 'admin' %}bg-danger{% elif user.profile.role == 'staff' %}bg-warning{% else %}bg-primary{% endif %} text-white">
+                        {{ user.profile.get_role_display }}
+                    </span>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="font-weight-bold">Account Statistics</h6>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="p-3 border rounded">
+                                <h3 class="h5 mb-0">{{ medicine_count }}</h3>
+                                <small class="text-muted">Medicines</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 border rounded">
+                                <h3 class="h5 mb-0">{{ expired_count }}</h3>
+                                <small class="text-muted">Expired</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="font-weight-bold">Account Details</h6>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Date Joined</span>
+                            <span>{{ user.date_joined|date:"M d, Y" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Last Login</span>
+                            <span>{{ user.last_login|date:"M d, Y H:i" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Email Notifications</span>
+                            <span>
+                                {% if user.profile.email_notifications %}
+                                <i class="fas fa-check-circle text-success"></i> Enabled
+                                {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> Disabled
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>Dark Mode</span>
+                            <span>
+                                {% if user.profile.dark_mode %}
+                                <i class="fas fa-check-circle text-success"></i> Enabled
+                                {% else %}
+                                <i class="fas fa-times-circle text-danger"></i> Disabled
+                                {% endif %}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Update Profile</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="font-weight-bold mb-3">User Information</h5>
+                            {{ u_form|crispy }}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="font-weight-bold mb-3">Profile Settings</h5>
+                            {{ p_form|crispy }}
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% if recent_medicines %}
+                        {% for medicine in recent_medicines %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">{{ medicine.name }}</h6>
+                                <p class="timeline-text">
+                                    {% if medicine.date_added|date:"Y-m-d" == today %}
+                                        Added today at {{ medicine.date_added|date:"H:i" }}
+                                    {% else %}
+                                        Added on {{ medicine.date_added|date:"M d, Y" }}
+                                    {% endif %}
+                                </p>
+                                <div>
+                                    <span class="badge {% if medicine.expiry_status == 'expired' %}bg-danger{% elif medicine.expiry_status == 'expiring_soon' %}bg-warning{% else %}bg-success{% endif %} text-white">
+                                        {{ medicine.get_expiry_status_display }}
+                                    </span>
+                                    <a href="{% url 'medicine-detail' medicine.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center">No recent activity found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .timeline:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 15px;
+        height: 100%;
+        width: 2px;
+        background: #e3e6f0;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 30px;
+        padding-left: 40px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        top: 5px;
+        left: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #4e73df;
+        border: 4px solid #fff;
+        box-shadow: 0 0 0 2px #e3e6f0;
+    }
+    
+    .timeline-content {
+        padding: 15px;
+        border-radius: 5px;
+        background: #f8f9fc;
+        border-left: 3px solid #4e73df;
+    }
+    
+    .timeline-title {
+        margin-top: 0;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .timeline-text {
+        margin-bottom: 10px;
+        color: #858796;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}- Register{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10 col-lg-12 col-md-9">
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0">
+                <div class="row">
+                    <div class="col-lg-5 d-none d-lg-block bg-register-image">
+                        <div class="h-100 d-flex align-items-center justify-content-center" style="background-color: #4e73df;">
+                            <div class="text-center text-white p-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-pills fa-4x"></i>
+                                </div>
+                                <h1 class="h2 mb-4">Medicine Expiry Tracker</h1>
+                                <p class="mb-4">Join us to track your medicines, get notified before they expire, and manage your inventory efficiently.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4 text-gray-900 mb-4">Create an Account!</h1>
+                            </div>
+                            <form class="user" method="post">
+                                {% csrf_token %}
+                                
+                                <div class="form-group mb-3">
+                                    {{ form.username|as_crispy_field }}
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    {{ form.email|as_crispy_field }}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="form-group mb-3">
+                                            {{ form.password1|as_crispy_field }}
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group mb-3">
+                                            {{ form.password2|as_crispy_field }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <div class="custom-control custom-checkbox small">
+                                        <input type="checkbox" class="custom-control-input" id="emailNotifications" name="email_notifications" checked>
+                                        <label class="custom-control-label" for="emailNotifications">
+                                            Receive email notifications for expiring medicines
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-user btn-block">
+                                    Register Account
+                                </button>
+                            </form>
+                            <hr>
+                            <div class="text-center">
+                                <a class="small" href="#">Forgot Password?</a>
+                            </div>
+                            <div class="text-center">
+                                <a class="small" href="{% url 'login' %}">Already have an account? Login!</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bg-register-image {
+        background-position: center;
+        background-size: cover;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Expiry Tracker {% block title %}{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #858796;
+            --success-color: #1cc88a;
+            --info-color: #36b9cc;
+            --warning-color: #f6c23e;
+            --danger-color: #e74a3b;
+            --light-color: #f8f9fc;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--light-color);
+            transition: background-color 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background-color: #343a40;
+            color: #f8f9fc;
+        }
+        
+        body.dark-mode .card {
+            background-color: #454d55;
+            color: #f8f9fc;
+        }
+        
+        body.dark-mode .table {
+            color: #f8f9fc;
+        }
+        
+        body.dark-mode .navbar {
+            background-color: #212529 !important;
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background-color: var(--primary-color);
+            background-image: linear-gradient(180deg, var(--primary-color) 10%, #224abe 100%);
+            background-size: cover;
+        }
+        
+        .sidebar-brand {
+            height: 4.375rem;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 800;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            letter-spacing: 0.05rem;
+            z-index: 1;
+        }
+        .sidebar-brand-icon i {
+            font-size: 2rem;
+        }
+        
+        .sidebar-brand-text {
+            display: inline;
+            font-size: 1.2rem;
+        }
+        
+        .nav-item .nav-link {
+            position: relative;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 700;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .nav-item .nav-link:hover {
+            color: #fff;
+        }
+        
+        .nav-item .nav-link i {
+            font-size: 0.85rem;
+            margin-right: 0.25rem;
+        }
+        
+        .nav-item.active .nav-link {
+            color: #fff;
+            font-weight: 700;
+        }
+        
+        .content {
+            flex: 1 0 auto;
+        }
+        
+        .topbar {
+            height: 4.375rem;
+        }
+        
+        .topbar .navbar-search {
+            width: 25rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+        }
+        
+        .card-body {
+            flex: 1 1 auto;
+            min-height: 1px;
+            padding: 1.25rem;
+        }
+        
+        .status-expired, .status-expiring_soon {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        .status-near_expiry {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+        
+        .status-safe {
+            color: var(--success-color);
+        }
+        
+        .toggle-dark-mode {
+            cursor: pointer;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if user.is_authenticated and user.profile.dark_mode %}dark-mode{% endif %}">
+    <div class="d-flex">
+        <!-- Sidebar -->
+        {% if user.is_authenticated %}
+        <div class="sidebar col-lg-2 d-none d-md-block">
+            <div class="sidebar-brand d-flex align-items-center justify-content-center text-white">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-pills"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">MedTracker</div>
+            </div>
+            <hr class="sidebar-divider my-0">
+            <ul class="nav flex-column">
+                <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="fas fa-fw fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.resolver_match.url_name == 'medicine-create' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'medicine-create' %}">
+                        <i class="fas fa-fw fa-plus-circle"></i>
+                        <span>Add Medicine</span>
+                    </a>
+                </li>
+                {% if user.profile.role == 'admin' %}
+                <li class="nav-item {% if request.resolver_match.url_name == 'category-list' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'category-list' %}">
+                        <i class="fas fa-fw fa-list"></i>
+                        <span>Categories</span>
+                    </a>
+                </li>
+                <li class="nav-item {% if request.resolver_match.url_name == 'user-list' %}active{% endif %}">
+                    <a class="nav-link" href="{% url 'user-list' %}">
+                        <i class="fas fa-fw fa-users"></i>
+                        <span>Users</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'profile' %}">
+                        <i class="fas fa-fw fa-user"></i>
+                        <span>Profile</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">
+                        <i class="fas fa-fw fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Content Wrapper -->
+        <div class="content col {% if user.is_authenticated %}col-lg-10{% endif %} px-0">
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                {% if user.is_authenticated %}
+                <!-- Sidebar Toggle (Mobile) -->
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+                {% endif %}
+                
+                <a class="navbar-brand d-md-none" href="{% url 'dashboard' %}">
+                    <i class="fas fa-pills mr-2"></i> MedTracker
+                </a>
+                
+                <!-- Topbar Navbar -->
+                <ul class="navbar-nav ml-auto">
+                    {% if user.is_authenticated %}
+                    <!-- Dark Mode Toggle -->
+                    <li class="nav-item dropdown no-arrow mx-1">
+                        <a class="nav-link toggle-dark-mode" id="darkModeToggle">
+                            <i class="fas {% if user.profile.dark_mode %}fa-sun{% else %}fa-moon{% endif %}"></i>
+                        </a>
+                    </li>
+                    
+                    <div class="topbar-divider d-none d-sm-block"></div>
+                    
+                    <!-- User Information -->
+                    <li class="nav-item dropdown no-arrow">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ user.username }}</span>
+                            <i class="fas fa-user-circle fa-fw"></i>
+                        </a>
+                        <!-- Dropdown - User Information -->
+                        <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in"
+                             aria-labelledby="userDropdown">
+                            <a class="dropdown-item" href="{% url 'profile' %}">
+                                <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Profile
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'register' %}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <!-- Main Content -->
+            <div class="container-fluid">
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+            
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white mt-5">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Medicine Expiry Tracker 2025</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Dark Mode Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('dark-mode');
+                    const isDarkMode = document.body.classList.contains('dark-mode');
+                    
+                    // Update icon
+                    const icon = darkModeToggle.querySelector('i');
+                    if (isDarkMode) {
+                        icon.classList.remove('fa-moon');
+                        icon.classList.add('fa-sun');
+                    } else {
+                        icon.classList.remove('fa-sun');
+                        icon.classList.add('fa-moon');
+                    }
+                    
+                    // Save preference via AJAX (to be implemented)
+                    // This is a placeholder for the actual implementation
+                    console.log('Dark mode:', isDarkMode);
+                });
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

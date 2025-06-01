@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}- Delete Medicine{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'medicine-detail' object.id %}">{{ object.name }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Delete</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Delete Medicine</h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Warning</h5>
+                    <p>Are you sure you want to delete "{{ object.name }}"? This action cannot be undone.</p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Medicine Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> {{ object.name }}</li>
+                            <li><strong>Category:</strong> {{ object.category.name }}</li>
+                            <li><strong>Batch Number:</strong> {{ object.batch_number }}</li>
+                            <li><strong>Expiry Date:</strong> {{ object.expiry_date|date:"F d, Y" }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">Status:</h6>
+                        <p>
+                            <span class="status-{{ object.expiry_status }}">
+                                {% if object.expiry_status == 'expired' %}
+                                    <i class="fas fa-times-circle"></i> Expired
+                                {% elif object.expiry_status == 'expiring_soon' %}
+                                    <i class="fas fa-exclamation-circle"></i> Expiring Soon
+                                {% elif object.expiry_status == 'near_expiry' %}
+                                    <i class="fas fa-exclamation-triangle"></i> Near Expiry
+                                {% else %}
+                                    <i class="fas fa-check-circle"></i> Safe
+                                {% endif %}
+                            </span>
+                        </p>
+                        <h6 class="font-weight-bold">Added By:</h6>
+                        <p>{{ object.user.username }}</p>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Confirm Delete
+                        </button>
+                        <a href="{% url 'medicine-detail' object.id %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

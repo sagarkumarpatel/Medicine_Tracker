@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}- {{ medicine.name }} Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ medicine.name }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Medicine Details</h6>
+                <div>
+                    <a href="{% url 'medicine-update' medicine.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <a href="{% url 'medicine-delete' medicine.id %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i> Delete
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="font-weight-bold">Basic Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Name:</th>
+                                <td>{{ medicine.name }}</td>
+                            </tr>
+
+                            <tr>
+                                <th>Description:</th>
+                                <td>{{ medicine.description|default:"No description provided" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Batch Number:</th>
+                                <td>{{ medicine.batch_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>Manufacturer:</th>
+                                <td>{{ medicine.manufacturer|default:"Not specified" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="font-weight-bold">Expiry Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Expiry Date:</th>
+                                <td>{{ medicine.expiry_date|date:"F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Days Until Expiry:</th>
+                                <td>
+                                    <span class="status-{{ medicine.expiry_status }}">
+                                        {% if medicine.days_until_expiry < 0 %}
+                                            Expired {{ medicine.days_until_expiry|abs }} days ago
+                                        {% else %}
+                                            {{ medicine.days_until_expiry }} days
+                                        {% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    <span class="status-{{ medicine.expiry_status }}">
+                                        {% if medicine.expiry_status == 'expired' %}
+                                            <i class="fas fa-times-circle"></i> Expired
+                                        {% elif medicine.expiry_status == 'expiring_soon' %}
+                                            <i class="fas fa-exclamation-circle"></i> Expiring Soon
+                                        {% elif medicine.expiry_status == 'near_expiry' %}
+                                            <i class="fas fa-exclamation-triangle"></i> Near Expiry
+                                        {% else %}
+                                            <i class="fas fa-check-circle"></i> Safe
+                                        {% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Quantity:</th>
+                                <td>{{ medicine.quantity }}</td>
+                            </tr>
+                            <tr>
+                                <th>Storage Conditions:</th>
+                                <td>{{ medicine.storage_condition|default:"Not specified" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5 class="font-weight-bold">Additional Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th>Added By:</th>
+                                <td>{{ medicine.added_by.username }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date Added:</th>
+                                <td>{{ medicine.date_added|date:"F d, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Last Updated:</th>
+                                <td>{{ medicine.last_updated|date:"F d, Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Notes:</th>
+                                <td>{{ medicine.notes|default:"No notes provided"|linebreaks }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">QR Code</h6>
+            </div>
+            <div class="card-body text-center">
+                {% if medicine.qr_code %}
+                <img src="{{ medicine.qr_code.url }}" alt="QR Code for {{ medicine.name }}" class="img-fluid mb-3" style="max-width: 200px;">
+                <p class="mb-0">Scan this QR code to view medicine details</p>
+                <a href="{{ medicine.qr_code.url }}" download class="btn btn-primary btn-sm mt-3">
+                    <i class="fas fa-download"></i> Download QR Code
+                </a>
+                {% else %}
+                <p>QR code not available</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Expiry Timeline</h6>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-4" style="height: 25px;">
+                    {% if medicine.expiry_status == 'expired' %}
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">Expired</div>
+                    {% else %}
+                        {% with days_until_expiry=medicine.days_until_expiry %}
+                            {% if days_until_expiry <= 7 %}
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ days_until_expiry }} days left</div>
+                            {% elif days_until_expiry <= 30 %}
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">{{ days_until_expiry }} days left</div>
+                            {% else %}
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">{{ days_until_expiry }} days left</div>
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <small>Date Added: {{ medicine.date_added|date:"M d, Y" }}</small>
+                    <small>Expiry Date: {{ medicine.expiry_date|date:"M d, Y" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
